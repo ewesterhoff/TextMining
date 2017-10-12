@@ -1,5 +1,5 @@
 # Project Overview
-This project lays the groundwork for a new religion, in a way.  Using a webscaper, text files from a collected list of religions are created and stored in a folder.  These text files are then read, and analyzed using Markov chains to create randomly generated speech from a combination of all the religious documents.
+This project draws useless insights from many semi-coherent religions. Using a webscaper, text files from a collected list of religions are created and stored in a folder.  These text files are then read, and analyzed using Markov chains to create randomly generated speech from a combination of all the religious documents. This speech has to be parsed by the human mind, but can contain some surprisingly good nuggets.
 
 # Implementation
 This implementation is done in two parts: fetching and generating.  The fetching is done in fetch_files.py.  We travel to the website containing our content, and we know that the first 16 links on that page lead to large enough religions to gather religious documents.  We follow those sixteen links to their respective pages, and store the links of all text files on those pages in a list.  The second section of this code creates a folder in the working directory, sweeps through the list of texts, and stores all of the data in relevantly named files.
