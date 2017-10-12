@@ -1,27 +1,26 @@
+"""This module contains a code example related to
+
+Think Python, 2nd Edition
+by Allen Downey
+http://thinkpython2.com
+
+Copyright 2015 Allen Downey
+
+License: http://creativecommons.org/licenses/by/4.0/
+"""
+
 from __future__ import print_function, division
-from os.path import exists
 
 import sys
 import string
 import random
-import requests
-import glob
 
 # global variables
 suffix_map = {}        # map from prefixes to a list of suffixes
-#{(prefix, [sf1, sf2, sf3, ..., sfn])}
 prefix = ()            # current tuple of words
 
-def get_book(file_name):
-    """Checks to see if filename is on file, and loads it
 
-    returns: lines of file
-    """
-    f = open(file_name, 'rb')
-    lines = f.readlines()
-    return lines
-
-def process_file(f, order):
+def process_file(filename, order=2):
     """Reads a file and performs Markov analysis.
 
     filename: string
@@ -29,55 +28,46 @@ def process_file(f, order):
 
     returns: map from prefix to list of possible suffixes.
     """
-    for line in f:
+    fp = open(filename)
+    #skip_gutenberg_header(fp)
+
+    for line in fp:
         for word in line.rstrip().split():
             process_word(word, order)
 
-def clean_words(word):
-    #removes errant punctuation and numbers
-    punctuation = ['[', ']', "'", ":", "@", "*", "/", "(", ")", '1', '2', '3', '4', '5', '6', '7', '8', '9']
-    for letter in word:
-        if letter in punctuation:
-            return False
-    #removes character names
-    if (word == word.upper()) and (len(word) > 3):
-        return False
-    #removes numbers
-    try:
-        int(word)
-        return False
-    except:
-        return True
-    return True
 
-def process_word(word, order):
-    """Processes the words in each paragraph, mapping words to all possible suffixes
+def skip_gutenberg_header(fp):
+    """Reads from fp until it finds the line that ends the header.
+
+    fp: open file object
+    """
+    for line in fp:
+        if line.startswith('*END*THE SMALL PRINT!'):
+            break
+
+
+def process_word(word, order=2):
+    """Processes each word.
+
+    word: string
+    order: integer
+
+    During the first few iterations, all we do is store up the words;
+    after that we start adding entries to the dictionary.
     """
     global prefix
-
-    #boolean false if the word shouldn't be included
-    check = clean_words(word)
-    if check == False:
-        return
-
-    try:
-        word = word.decode("utf-8")
-    except:
-        return
-
-    #starts off the dictionary
     if len(prefix) < order:
         prefix += (word,)
         return
 
-    #check if the previous word already has a chain started
     try:
         suffix_map[prefix].append(word)
     except KeyError:
-        # if not, start one
+        # if there is no entry for this prefix, make one
         suffix_map[prefix] = [word]
 
     prefix = shift(prefix, word)
+
 
 def random_text(n):
     """Generates random wordsfrom the analyzed text.
@@ -96,10 +86,12 @@ def random_text(n):
             # original text, so we have to start again.
             random_text(n-i)
             return
+
         # choose a random suffix
         word = random.choice(suffixes)
         print(word, end=' ')
         start = shift(start, word)
+
 
 def shift(t, word):
     """Forms a new tuple by removing the head and adding word to the tail.
@@ -111,22 +103,15 @@ def shift(t, word):
     """
     return t[1:] + (word,)
 
-def main(files, n, order):
-    for t in files:
-        f = get_book(t)
-        n = int(n)
-        order = int(order)
-        process_file(f, order)
+
+def main(script, filename='emma.txt', n=30, order=2):
+
+    n = int(n)
+    order = int(order)
+    process_file(filename, order)
     random_text(n)
     print()
 
 
 if __name__ == '__main__':
-    files = glob.glob('religious documents/*.txt')
-    #files = ['emma.txt']
-
-    texts = []
-    for f in files:
-       texts.append(f)
-
-    main(texts, 120, 3)
+    main(*sys.argv)
