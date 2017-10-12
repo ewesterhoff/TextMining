@@ -129,4 +129,4 @@ if __name__ == '__main__':
     for f in files:
        texts.append(f)
 
-    main(texts, 120, 3)
+    main(texts, 500, 3)
