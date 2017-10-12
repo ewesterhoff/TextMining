@@ -1,12 +1,11 @@
 from __future__ import print_function, division
 from os.path import exists
-from pickle import dump, load
 
 import sys
 import string
 import random
 import requests
-import unicodedata
+import glob
 
 # global variables
 suffix_map = {}        # map from prefixes to a list of suffixes
@@ -15,15 +14,14 @@ prefix = ()            # current tuple of words
 
 def get_book(file_name):
     """Checks to see if filename is on file, and loads it
-    If it's not on file, code travels to project gutenberg, creates file, and then loads it
 
-    returns: plain text file
+    returns: lines of file
     """
-    f = open(file_name)
+    f = open(file_name, 'rb')
     lines = f.readlines()
     return lines
 
-def process_file(f, order=2):
+def process_file(f, order):
     """Reads a file and performs Markov analysis.
 
     filename: string
@@ -31,28 +29,41 @@ def process_file(f, order=2):
 
     returns: map from prefix to list of possible suffixes.
     """
-    clean_file(f)
-
     for line in f:
         for word in line.rstrip().split():
             process_word(word, order)
 
-def clean_file(fp):
-    """Cleans file of any information not desired, including
-    Header
-    Footer
-    Unparsable characters
-    """
+def clean_words(word):
+    #removes errant punctuation and numbers
+    punctuation = ['[', ']', "'", ":", "@", "*", "/", "(", ")", '1', '2', '3', '4', '5', '6', '7', '8', '9']
+    for letter in word:
+        if letter in punctuation:
+            return False
+    #removes character names
+    if (word == word.upper()) and (len(word) > 3):
+        return False
+    #removes numbers
+    try:
+        int(word)
+        return False
+    except:
+        return True
+    return True
 
-    for line in fp:
-        if line.startswith('*** START OF THIS PROJECT GUTENBERG EBOOK EMMA ***'):
-            break
-
-def process_word(word, order=2):
+def process_word(word, order):
     """Processes the words in each paragraph, mapping words to all possible suffixes
     """
     global prefix
 
+    #boolean false if the word shouldn't be included
+    check = clean_words(word)
+    if check == False:
+        return
+
+    try:
+        word = word.decode("utf-8")
+    except:
+        return
     #starts off the dictionary
     if len(prefix) < order:
         prefix += (word,)
@@ -85,8 +96,6 @@ def random_text(n):
 
         # choose a random suffix
         word = random.choice(suffixes)
-        word = str(word)
-        word.replace("b'", "")
         print(word, end=' ')
         start = shift(start, word)
 
@@ -100,19 +109,23 @@ def shift(t, word):
     """
     return t[1:] + (word,)
 
-def main(filename, n=20, order=2):
-    f = get_book(filename)
-    try:
+def main(files, n=50, order=7):
+    for t in files:
+        f = get_book(t)
         n = int(n)
         order = int(order)
-    except ValueError:
-        print('Inputs not well defined')
-    else:
         process_file(f, order)
-        random_text(n)
-        print()
+
+    random_text(n)
+    print()
 
 
 if __name__ == '__main__':
-    texts = '158.txt'
-    main(texts, 20, 2)
+    #texts = ['bible.txt', 'philosphy.txt', 'emma.txt']
+    files = glob.glob('religious documents/*.txt')
+
+    texts = []
+    for f in files:
+       texts.append(f)
+
+    main(texts, 100, 2)
